@@ -13,9 +13,9 @@
 1. Download the latest release [here](https://github.com/Jelly-Pudding/minecraft-discord-relay/releases/latest).
 2. Place the `.jar` file in your Minecraft server's `plugins` folder.
 3. Restart your server to generate the default configuration file.
-4. Set up your Discord bot (see [Discord Bot Setup](#discord-bot-setup)).
-5. Configure the plugin (see [Configuration](#configuration)).
-6. Restart your server again or use the [reload command](#in-game-commands).
+4. Set up your Discord bot (see Discord Bot Setup below).
+5. Configure the plugin (see Configuration below).
+6. Restart your server again.
 
 ## Discord Bot Setup
 1. Go to the [Discord Developer Portal](https://discord.com/developers/applications).
