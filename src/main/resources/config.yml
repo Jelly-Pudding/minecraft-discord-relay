@@ -1,0 +1,7 @@
+# Configuration file for the Discord Relay plugin
+
+# Discord bot token (keep this secret!)
+discord-bot-token: "YOUR_BOT_TOKEN_HERE"
+
+# Discord channel ID for relaying messages
+discord-channel-id: "YOUR_CHANNEL_ID_HERE"

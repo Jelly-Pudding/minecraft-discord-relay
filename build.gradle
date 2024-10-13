@@ -1,0 +1,67 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.jellypudding'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://m2.dv8tion.net/releases' }
+    maven {
+        name = "papermc-repo"
+        url = "https://repo.papermc.io/repository/maven-public/"
+    }
+    maven {
+        name = "sonatype"
+        url = "https://oss.sonatype.org/content/groups/public/"
+    }
+}
+
+dependencies {
+    compileOnly "io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT"
+    implementation "net.dv8tion:JDA:5.1.2"
+}
+
+def targetJavaVersion = 21
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release.set(targetJavaVersion)
+}
+
+tasks.register('fatJar', Jar) {
+    archiveClassifier.set('') // No classifier, replaces the standard JAR
+    from sourceSets.main.output
+
+    // Include all runtime dependencies
+    dependsOn configurations.runtimeClasspath
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    // Removed the empty manifest block to fix the build error
+    // Since Bukkit uses plugin.yml to determine the main class,
+    // we don't need to set 'Main-Class' in the manifest.
+}
+
+tasks.named('build') {
+    dependsOn 'fatJar'
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}

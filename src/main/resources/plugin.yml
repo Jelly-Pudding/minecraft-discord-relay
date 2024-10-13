@@ -1,0 +1,6 @@
+name: DiscordRelay
+version: '1.0-SNAPSHOT'
+main: com.jellypudding.discordRelay.DiscordRelay
+api-version: '1.21'
+description: "Relays messages between Minecraft and Discord."
+author: AlphaAlex115
