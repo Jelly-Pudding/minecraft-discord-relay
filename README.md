@@ -24,7 +24,7 @@
 4. You may have to carry out two-factor authentication. Once you see the new token, copy it to a notepad file.
 5. In the "Bot" tab, scroll down to the "Privileged Gateway Intents" section. Enable "MESSAGE CONTENT INTENT" and "SERVER MEMBERS INTENT".
 6. Go to the "OAuth2" tab, then "OAuth2 URL Generator".
-7. In "Scopes", select "bot". This will make a "Bot Permissions" section appear below.
+7. In "Scopes", select "applications.commands" and "bot". This will make a "Bot Permissions" section appear below.
 8. In "Bot Permissions", select:
    - Read Message History
    - View Channels
