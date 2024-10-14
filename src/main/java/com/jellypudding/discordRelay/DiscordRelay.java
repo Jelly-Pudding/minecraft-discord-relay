@@ -4,10 +4,11 @@ import io.papermc.paper.event.player.AsyncChatEvent;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -20,6 +21,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -37,6 +39,7 @@ public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
     private JDA jda;
     private String discordChannelId;
     private boolean isConfigured = false;
+    private long startTime;
 
     private void loadConfig() {
         reloadConfig();
@@ -52,6 +55,7 @@ public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
     public void onEnable() {
         saveDefaultConfig();
         loadConfig();
+        startTime = System.currentTimeMillis();
         if (isConfigured) {
             initializePlugin(false);
         } else {
@@ -83,6 +87,13 @@ public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
                     .addEventListeners(new DiscordListener())
                     .build();
             jda.awaitReady();
+
+            // Register the slash commands
+            jda.updateCommands().addCommands(
+                    Commands.slash("list", "Get a list of online players"),
+                    Commands.slash("uptime", "Get the server uptime")
+            ).queue();
+
             getLogger().info("Discord bot connected successfully!");
 
             if (!isReload) {
@@ -182,6 +193,32 @@ public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
         sendPlayerEventToDiscord(playerName, "left the game", Color.RED);
     }
 
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        String playerName = event.getEntity().getName();
+        String deathMessage = event.deathMessage() != null
+                ? PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(event.deathMessage()))
+                : playerName + " died";
+        sendDeathMessageToDiscord(playerName, deathMessage);
+    }
+
+    private void sendDeathMessageToDiscord(String playerName, String deathMessage) {
+        if (!isConfigured) return;
+
+        if (jda != null) {
+            TextChannel channel = jda.getTextChannelById(discordChannelId);
+            if (channel != null) {
+                String avatarUrl = String.format("https://mc-heads.net/avatar/%s", playerName);
+                EmbedBuilder embed = new EmbedBuilder()
+                        .setAuthor(deathMessage, null, avatarUrl)
+                        .setColor(Color.GRAY);
+                channel.sendMessageEmbeds(embed.build()).queue();
+            } else {
+                getLogger().warning("Discord channel not found!");
+            }
+        }
+    }
+
     private void sendToDiscord(String message) {
         if (!isConfigured) return;
 
@@ -245,23 +282,29 @@ public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
 
     private class DiscordListener extends ListenerAdapter {
         @Override
-        public void onMessageReceived(MessageReceivedEvent event) {
-            if (event.getChannel().getId().equals(discordChannelId) && !event.getAuthor().isBot()) {
-                String content = event.getMessage().getContentRaw();
-                if (content.equalsIgnoreCase("/list")) {
-                    sendPlayerList(event.getChannel());
-                } else {
-                    Member member = event.getMember();
-                    String name = (member != null && member.getNickname() != null) ? member.getNickname() : event.getAuthor().getName();
-                    String message = String.format("§9[Discord] §6%s§f: %s", name, event.getMessage().getContentDisplay());
-                    Bukkit.getScheduler().runTask(DiscordRelay.this, () ->
-                            Bukkit.broadcast(net.kyori.adventure.text.Component.text(message))
-                    );
-                }
+        public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+            if (event.getName().equals("list")) {
+                event.deferReply().queue(); // Acknowledge the command immediately
+                sendPlayerList(event);
+            } else if (event.getName().equals("uptime")) {
+                event.deferReply().queue(); // Acknowledge the command immediately
+                sendUptime(event);
             }
         }
 
-        private void sendPlayerList(MessageChannel channel) {
+        @Override
+        public void onMessageReceived(MessageReceivedEvent event) {
+            if (event.getChannel().getId().equals(discordChannelId) && !event.getAuthor().isBot()) {
+                Member member = event.getMember();
+                String name = (member != null && member.getNickname() != null) ? member.getNickname() : event.getAuthor().getName();
+                String message = String.format("§9[Discord] §6%s§f: %s", name, event.getMessage().getContentDisplay());
+                Bukkit.getScheduler().runTask(DiscordRelay.this, () ->
+                        Bukkit.broadcast(net.kyori.adventure.text.Component.text(message))
+                );
+            }
+        }
+
+        private void sendPlayerList(SlashCommandInteractionEvent event) {
             List<String> playerNames = Bukkit.getOnlinePlayers().stream()
                     .map(Player::getName)
                     .collect(Collectors.toList());
@@ -274,7 +317,24 @@ public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
                     .setDescription(message)
                     .setColor(Color.BLUE);
 
-            channel.sendMessageEmbeds(embed.build()).queue();
+            event.getHook().sendMessageEmbeds(embed.build()).queue();
+        }
+
+        private void sendUptime(SlashCommandInteractionEvent event) {
+            long uptime = System.currentTimeMillis() - startTime;
+            long days = uptime / (1000 * 60 * 60 * 24);
+            long hours = (uptime / (1000 * 60 * 60)) % 24;
+            long minutes = (uptime / (1000 * 60)) % 60;
+            long seconds = (uptime / 1000) % 60;
+
+            String uptimeString = String.format("%d days, %d hours, %d minutes, %d seconds", days, hours, minutes, seconds);
+
+            EmbedBuilder embed = new EmbedBuilder()
+                    .setTitle("Server Uptime")
+                    .setDescription(uptimeString)
+                    .setColor(Color.GREEN);
+
+            event.getHook().sendMessageEmbeds(embed.build()).queue();
         }
     }
 }
