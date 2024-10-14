@@ -55,8 +55,8 @@ discord-channel-id: 'YOUR_CHANNEL_ID_HERE'
 `/discordrelay reload`: Reloads the plugin configuration.
 
 ## Discord Commands
-`/list`: Shows the list of online Minecraft players.
-`/uptime`: Displays the current uptime of the Minecraft server.
+- `/list`: Shows the list of online Minecraft players.
+- `/uptime`: Displays the current uptime of the Minecraft server.
 
 ## Support Me
 Donations to my [Patreon](https://www.patreon.com/lolwhatyesme) will help with the development of this project.
