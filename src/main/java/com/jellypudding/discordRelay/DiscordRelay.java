@@ -18,6 +18,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -35,18 +36,48 @@ public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
 
     private JDA jda;
     private String discordChannelId;
+    private boolean isConfigured = false;
+
+    private void loadConfig() {
+        reloadConfig();
+        FileConfiguration config = getConfig();
+        String token = config.getString("discord-bot-token");
+        discordChannelId = config.getString("discord-channel-id");
+
+        isConfigured = token != null && !token.equals("YOUR_BOT_TOKEN_HERE") &&
+                discordChannelId != null && !discordChannelId.equals("YOUR_CHANNEL_ID_HERE");
+    }
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         loadConfig();
-        connectToDiscord(false);
+        if (isConfigured) {
+            initializePlugin(false);
+        } else {
+            getLogger().warning("The Discord bot is not yet configured. Please check your DiscordRelay/config.yml file.");
+        }
+    }
+
+    private void initializePlugin(boolean isReload) {
+        connectToDiscord(isReload);
+        if (isConfigured) {
+            registerListeners();
+            Objects.requireNonNull(getCommand("discordrelay")).setTabCompleter(this);
+        }
+    }
+
+    private void registerListeners() {
+        HandlerList.unregisterAll((JavaPlugin) this);
         getServer().getPluginManager().registerEvents(this, this);
-        Objects.requireNonNull(getCommand("discordrelay")).setTabCompleter(this);
     }
 
     private void connectToDiscord(boolean isReload) {
         try {
+            if (jda != null) {
+                jda.shutdown();
+                jda = null;
+            }
             jda = JDABuilder.createDefault(getConfig().getString("discord-bot-token"))
                     .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS)
                     .addEventListeners(new DiscordListener())
@@ -58,8 +89,8 @@ public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
                 sendToDiscord("**Server is starting up!**");
             }
         } catch (Exception e) {
-            getLogger().severe("Failed to connect to Discord: " + e.getMessage());
-            getServer().getPluginManager().disablePlugin(this);
+            getLogger().severe("Failed to connect to Discord. Please check your bot token and try again.");
+            isConfigured = false;
         }
     }
 
@@ -67,16 +98,11 @@ public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
     public void onDisable() {
         if (jda != null) {
             try {
-                // Send shutdown message synchronously
-                TextChannel channel = jda.getTextChannelById(discordChannelId);
-                if (channel != null) {
-                    channel.sendMessage("**Server is shutting down!**").complete();
-                }
+                sendToDiscord("**Server is shutting down!**");
 
                 jda.removeEventListener(jda.getRegisteredListeners());
                 jda.shutdownNow();
                 try {
-                    // Wait for shutdown with a shorter timeout
                     if (!jda.awaitShutdown(Duration.ofSeconds(2))) {
                         getLogger().warning("JDA did not shut down in time. Forcing shutdown.");
                         jda.shutdown();
@@ -91,15 +117,13 @@ public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
                 getLogger().warning("Error during JDA shutdown: " + e.getMessage());
             }
         }
-    }
-
-    private void loadConfig() {
-        FileConfiguration config = getConfig();
-        discordChannelId = config.getString("discord-channel-id");
+        HandlerList.unregisterAll((JavaPlugin) this);
     }
 
     @EventHandler
     public void onPlayerChat(AsyncChatEvent event) {
+        if (!isConfigured) return;
+
         if (event.isAsynchronous()) {
             String playerName = event.getPlayer().getName();
             String message = PlainTextComponentSerializer.plainText().serialize(event.message());
@@ -130,6 +154,8 @@ public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
     }
 
     private void sendPlayerEventToDiscord(String playerName, String action, Color color) {
+        if (!isConfigured) return;
+
         if (jda != null) {
             TextChannel channel = jda.getTextChannelById(discordChannelId);
             if (channel != null) {
@@ -157,10 +183,12 @@ public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
     }
 
     private void sendToDiscord(String message) {
+        if (!isConfigured) return;
+
         if (jda != null) {
             TextChannel channel = jda.getTextChannelById(discordChannelId);
             if (channel != null) {
-                channel.sendMessage(message).queue();
+                channel.sendMessage(message).complete();
             } else {
                 getLogger().warning("Discord channel not found!");
             }
@@ -185,12 +213,22 @@ public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
     }
 
     private void reloadPlugin() {
-        if (jda != null) {
-            jda.shutdown();
-        }
-        reloadConfig();
         loadConfig();
-        connectToDiscord(true);
+        if (isConfigured) {
+            initializePlugin(true);
+            if (jda != null) {
+                getLogger().info("DiscordRelay plugin reloaded successfully.");
+            } else {
+                getLogger().warning("Failed to connect to Discord after reload. Please check your bot token and try again.");
+            }
+        } else {
+            if (jda != null) {
+                jda.shutdown();
+                jda = null;
+            }
+            HandlerList.unregisterAll((JavaPlugin) this);
+            getLogger().warning("Failed to reload: Discord bot is not configured properly. Please check your config.yml file.");
+        }
     }
 
     @Override
