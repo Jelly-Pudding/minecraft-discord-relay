@@ -19,6 +19,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -131,9 +132,11 @@ public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
         HandlerList.unregisterAll((JavaPlugin) this);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerChat(AsyncChatEvent event) {
         if (!isConfigured) return;
+
+        if (event.isCancelled()) return;
 
         if (event.isAsynchronous()) {
             String playerName = event.getPlayer().getName();
