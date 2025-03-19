@@ -15,7 +15,6 @@ import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -35,7 +34,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
+public class DiscordRelay extends JavaPlugin implements Listener {
 
     private JDA jda;
     private String discordChannelId;
@@ -271,7 +270,6 @@ public class DiscordRelay extends JavaPlugin implements Listener, TabCompleter {
         }
     }
 
-    @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, String[] args) {
         if (command.getName().equalsIgnoreCase("discordrelay")) {
             if (args.length == 1) {
