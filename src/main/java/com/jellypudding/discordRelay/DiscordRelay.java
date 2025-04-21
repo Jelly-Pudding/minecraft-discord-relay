@@ -41,6 +41,14 @@ public class DiscordRelay extends JavaPlugin implements Listener {
     private boolean isConfigured = false;
     private long startTime;
 
+    /**
+     * Public getter for the configuration status.
+     * @return true if the plugin's config seems valid, false otherwise.
+     */
+    public boolean isPluginConfigured() {
+        return isConfigured;
+    }
+
     private void loadConfig() {
         reloadConfig();
         FileConfiguration config = getConfig();
@@ -58,6 +66,7 @@ public class DiscordRelay extends JavaPlugin implements Listener {
         startTime = System.currentTimeMillis();
         if (isConfigured) {
             initializePlugin(false);
+            DiscordRelayAPI.initialize(this);
         } else {
             getLogger().warning("The Discord bot is not yet configured. Please check your DiscordRelay/config.yml file.");
         }
@@ -128,6 +137,7 @@ public class DiscordRelay extends JavaPlugin implements Listener {
                 getLogger().warning("Error during JDA shutdown: " + e.getMessage());
             }
         }
+        DiscordRelayAPI.shutdown();
         HandlerList.unregisterAll((JavaPlugin) this);
     }
 
@@ -299,6 +309,23 @@ public class DiscordRelay extends JavaPlugin implements Listener {
                 Member member = event.getMember();
                 String name = (member != null && member.getNickname() != null) ? member.getNickname() : event.getAuthor().getName();
                 String message = String.format("§9[Discord] §6%s§f: %s", name, event.getMessage().getContentDisplay());
+
+                // Forward to FakePlayers if enabled
+                //if (Bukkit.getPluginManager().isPluginEnabled("FakePlayers")) {
+                //    try {
+                //        // Use the fully qualified name to avoid import if FakePlayers is optional
+                //        com.jellypudding.fakePlayers.FakePlayersAPI.addExternalMessage(message);
+                //    } catch (NoClassDefFoundError e) {
+                //        // This might happen if FakePlayers is removed without restarting/reloading
+                //        getLogger().warning("Could not forward Discord message to FakePlayers. Is it installed and enabled correctly?");
+                //    } catch (Exception e) {
+                //        getLogger().warning("Error forwarding Discord message to FakePlayers: " + e.getMessage());
+                //        // Log the stack trace for detailed debugging if needed
+                //        // e.printStackTrace();
+                //    }
+                //}
+
+                // Broadcast to Minecraft server
                 Bukkit.getScheduler().runTask(DiscordRelay.this, () ->
                         Bukkit.broadcast(net.kyori.adventure.text.Component.text(message))
                 );
@@ -338,4 +365,32 @@ public class DiscordRelay extends JavaPlugin implements Listener {
             event.getHook().sendMessageEmbeds(embed.build()).queue();
         }
     }
+
+    // --- Public API Methods ---
+
+    /** For DiscordRelayAPI: Relays player join event */
+    public void relayPlayerJoin(String playerName) {
+        if (!isConfigured) return;
+        sendPlayerEventToDiscord(playerName, "joined the game", Color.GREEN);
+    }
+
+    /** For DiscordRelayAPI: Relays player leave event */
+    public void relayPlayerLeave(String playerName) {
+        if (!isConfigured) return;
+        sendPlayerEventToDiscord(playerName, "left the game", Color.RED);
+    }
+
+    /** For DiscordRelayAPI: Relays player chat message */
+    public void relayPlayerMessage(String playerName, String message) {
+        if (!isConfigured) return;
+        sendPlayerMessageToDiscord(playerName, message);
+    }
+
+    /** For DiscordRelayAPI: Relays player death message */
+    public void relayPlayerDeath(String playerName, String deathMessage) {
+        if (!isConfigured) return;
+        sendDeathMessageToDiscord(playerName, deathMessage);
+    }
+
+    // --- End Public API Methods ---
 }
