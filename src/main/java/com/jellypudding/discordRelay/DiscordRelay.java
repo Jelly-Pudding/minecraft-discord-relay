@@ -30,8 +30,10 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.Color;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DiscordRelay extends JavaPlugin implements Listener {
@@ -308,37 +310,53 @@ public class DiscordRelay extends JavaPlugin implements Listener {
             if (event.getChannel().getId().equals(discordChannelId) && !event.getAuthor().isBot()) {
                 Member member = event.getMember();
                 String name = (member != null && member.getNickname() != null) ? member.getNickname() : event.getAuthor().getName();
-                String message = String.format("§9[Discord] §6%s§f: %s", name, event.getMessage().getContentDisplay());
+                String discordMessageContent = event.getMessage().getContentDisplay();
 
-                // Forward to FakePlayers if enabled
-                //if (Bukkit.getPluginManager().isPluginEnabled("FakePlayers")) {
-                //    try {
-                //        // Use the fully qualified name to avoid import if FakePlayers is optional
-                //        com.jellypudding.fakePlayers.FakePlayersAPI.addExternalMessage(message);
-                //    } catch (NoClassDefFoundError e) {
-                //        // This might happen if FakePlayers is removed without restarting/reloading
-                //        getLogger().warning("Could not forward Discord message to FakePlayers. Is it installed and enabled correctly?");
-                //    } catch (Exception e) {
-                //        getLogger().warning("Error forwarding Discord message to FakePlayers: " + e.getMessage());
-                //        // Log the stack trace for detailed debugging if needed
-                //        // e.printStackTrace();
-                //    }
-                //}
+                String messageForMinecraft = String.format("§9[Discord] §6%s§f: %s", name, discordMessageContent);
 
-                // Broadcast to Minecraft server
+                if (Bukkit.getPluginManager().isPluginEnabled("BedrockSupport")) {
+                    try {
+                        String plainMessageForAPI = String.format("[Discord] %s: %s", name, discordMessageContent);
+                        com.jellypudding.fakePlayers.FakePlayersAPI.addExternalMessage(plainMessageForAPI);
+                    } catch (NoClassDefFoundError e) {
+                        getLogger().warning("Could not forward Discord message to FakePlayers. Is it installed and enabled correctly?");
+                    } catch (Exception e) {
+                        getLogger().warning("Error forwarding Discord message to FakePlayers: " + e.getMessage());
+                    }
+                }
+
                 Bukkit.getScheduler().runTask(DiscordRelay.this, () ->
-                        Bukkit.broadcast(net.kyori.adventure.text.Component.text(message))
+                        Bukkit.broadcast(net.kyori.adventure.text.Component.text(messageForMinecraft))
                 );
             }
         }
 
         private void sendPlayerList(SlashCommandInteractionEvent event) {
-            List<String> playerNames = Bukkit.getOnlinePlayers().stream()
+            List<String> realPlayerNames = Bukkit.getOnlinePlayers().stream()
                     .map(Player::getName)
                     .collect(Collectors.toList());
 
-            String playerListString = playerNames.isEmpty() ? "No players online." : String.join(", ", playerNames);
-            String message = String.format("Online players (%d): %s", playerNames.size(), playerListString);
+            List<String> fakePlayerNames = new ArrayList<>();
+            if (Bukkit.getPluginManager().isPluginEnabled("BedrockSupport")) {
+                try {
+                    Set<String> currentFakes = com.jellypudding.fakePlayers.FakePlayersAPI.getCurrentFakePlayerNames();
+                    if (currentFakes != null) {
+                        fakePlayerNames.addAll(currentFakes);
+                    }
+                } catch (NoClassDefFoundError e) {
+                    getLogger().warning("Could not get fake player list for /list command. Is FakePlayers (BedrockSupport) installed and enabled correctly?");
+                } catch (Exception e) {
+                    getLogger().warning("Error getting fake player list for /list command: " + e.getMessage());
+                }
+            }
+
+            List<String> allPlayerNames = new ArrayList<>(realPlayerNames);
+            allPlayerNames.addAll(fakePlayerNames);
+            Collections.sort(allPlayerNames, String.CASE_INSENSITIVE_ORDER);
+
+            int totalPlayerCount = allPlayerNames.size();
+            String playerListString = totalPlayerCount == 0 ? "No players online." : String.join(", ", allPlayerNames);
+            String message = String.format("Online players (%d): %s", totalPlayerCount, playerListString);
 
             EmbedBuilder embed = new EmbedBuilder()
                     .setTitle("Player List")

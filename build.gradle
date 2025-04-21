@@ -21,6 +21,8 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
     implementation "net.dv8tion:JDA:5.2.2"
+    // Dependencies for local plugins (needed for compilation/IDE)
+    compileOnly files('libs/fake-players-1.0.jar')
 }
 
 def targetJavaVersion = 21
