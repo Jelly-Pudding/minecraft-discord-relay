@@ -5,3 +5,6 @@ discord-bot-token: "YOUR_BOT_TOKEN_HERE"
 
 # Discord channel ID for relaying messages
 discord-channel-id: "YOUR_CHANNEL_ID_HERE"
+
+# set this to false to disable relaying of chat messages
+chat-relay-enabled: true

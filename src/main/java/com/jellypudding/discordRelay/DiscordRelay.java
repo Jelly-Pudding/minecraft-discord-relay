@@ -39,6 +39,7 @@ public class DiscordRelay extends JavaPlugin implements Listener {
     private JDA jda;
     private String discordChannelId;
     private boolean isConfigured = false;
+    private boolean chatRelayEnabled = true;
     private long startTime;
 
     private void loadConfig() {
@@ -46,6 +47,7 @@ public class DiscordRelay extends JavaPlugin implements Listener {
         FileConfiguration config = getConfig();
         String token = config.getString("discord-bot-token");
         discordChannelId = config.getString("discord-channel-id");
+        chatRelayEnabled = Boolean.parseBoolean(config.getString("chat-relay-enabled", "true"));
 
         isConfigured = token != null && !token.equals("YOUR_BOT_TOKEN_HERE") &&
                 discordChannelId != null && !discordChannelId.equals("YOUR_CHANNEL_ID_HERE");
@@ -68,6 +70,9 @@ public class DiscordRelay extends JavaPlugin implements Listener {
         if (isConfigured) {
             registerListeners();
             Objects.requireNonNull(getCommand("discordrelay")).setTabCompleter(this);
+            if (!chatRelayEnabled) {
+                getLogger().info("Chat relay disabled by config.");
+            }
         }
     }
 
@@ -134,6 +139,7 @@ public class DiscordRelay extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerChat(AsyncChatEvent event) {
         if (!isConfigured) return;
+        if (!chatRelayEnabled) return;
 
         if (event.isCancelled()) return;
 
@@ -295,7 +301,7 @@ public class DiscordRelay extends JavaPlugin implements Listener {
 
         @Override
         public void onMessageReceived(MessageReceivedEvent event) {
-            if (event.getChannel().getId().equals(discordChannelId) && !event.getAuthor().isBot()) {
+            if (event.getChannel().getId().equals(discordChannelId) && !event.getAuthor().isBot() && chatRelayEnabled) {
                 Member member = event.getMember();
                 String name = (member != null && member.getNickname() != null) ? member.getNickname() : event.getAuthor().getName();
                 String message = String.format("§9[Discord] §6%s§f: %s", name, event.getMessage().getContentDisplay());
