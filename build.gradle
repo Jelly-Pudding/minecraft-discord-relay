@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'com.jellypudding'
-version = '1.0.3'
+version = '1.1.0'
 
 repositories {
     mavenCentral()
@@ -19,8 +19,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
-    implementation "net.dv8tion:JDA:5.2.2"
+    compileOnly("io.papermc.paper:paper-api:1.21.6-R0.1-SNAPSHOT")
+    implementation "net.dv8tion:JDA:5.6.1"
     // Dependencies for local plugins (needed for compilation/IDE)
     compileOnly files('libs/fake-players-1.0.jar')
 }

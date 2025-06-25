@@ -1,6 +1,6 @@
 # DiscordRelay Plugin
 
-**DiscordRelay** is a Minecraft Paper 1.21.4 plugin that creates a bidirectional chat bridge between your Minecraft server and a Discord channel.
+**DiscordRelay** is a Minecraft Paper 1.21.6 plugin that creates a bidirectional chat bridge between your Minecraft server and a Discord channel.
 
 ## Features
 - Relay chat messages from Minecraft to Discord and vice versa.
@@ -9,6 +9,7 @@
 - Show player avatars in Discord messages.
 - `/list` command in Discord to see online Minecraft players.
 - `/uptime` command in Discord to check server uptime.
+- `/tps` command in Discord to check server TPS (ticks per second).
 - Server start-up and shutdown notifications in Discord.
 
 ## Installation
@@ -52,15 +53,15 @@ discord-channel-id: 'YOUR_CHANNEL_ID_HERE'
 ```
 
 ## In-game Commands
-`/discordrelay reload`: Reloads the plugin configuration.
+`/discordrelay reload`: Reloads the plugin configuration. Requires `discordrelay.reload` permission (default: op).
 
 ## Discord Commands
 - `/list`: Shows the list of online Minecraft players.
 - `/uptime`: Displays the current uptime of the Minecraft server.
+- `/tps`: Shows the server's TPS (ticks per second) for the last 1, 5, and 15 minutes.
+
+## Permissions
+- `discordrelay.reload`: Allows reloading the plugin configuration (default: op).
 
 ## Support Me
-Donations will help me with the development of this project.
-
-One-off donation: https://ko-fi.com/lolwhatyesme
-
-Patreon: https://www.patreon.com/lolwhatyesme
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K715TC1R)

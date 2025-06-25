@@ -43,10 +43,6 @@ public class DiscordRelay extends JavaPlugin implements Listener {
     private boolean isConfigured = false;
     private long startTime;
 
-    /**
-     * Public getter for the configuration status.
-     * @return true if the plugin's config seems valid, false otherwise.
-     */
     public boolean isPluginConfigured() {
         return isConfigured;
     }
@@ -70,7 +66,7 @@ public class DiscordRelay extends JavaPlugin implements Listener {
             initializePlugin(false);
             DiscordRelayAPI.initialize(this);
         } else {
-            getLogger().warning("The Discord bot is not yet configured. Please check your DiscordRelay/config.yml file.");
+            getLogger().warning("The Discord bot is not yet configured. Please check your DiscordRelay/config.yml file and then use the /discordrelay reload command.");
         }
     }
 
@@ -102,7 +98,8 @@ public class DiscordRelay extends JavaPlugin implements Listener {
             // Register the slash commands
             jda.updateCommands().addCommands(
                     Commands.slash("list", "Get a list of online players"),
-                    Commands.slash("uptime", "Get the server uptime")
+                    Commands.slash("uptime", "Get the server's uptime"),
+                    Commands.slash("tps", "Get the server's TPS (ticks per second)")
             ).queue();
 
             getLogger().info("Discord bot connected successfully!");
@@ -255,9 +252,12 @@ public class DiscordRelay extends JavaPlugin implements Listener {
                     sender.sendMessage("DiscordRelay plugin reloaded.");
                     return true;
                 } else {
-                    sender.sendMessage("You don't have permission to reload the plugin.");
+                    sender.sendMessage("You don't have permission to reload DiscordRelay.");
                     return true;
                 }
+            } else {
+                sender.sendMessage("Usage: /discordrelay reload");
+                return true;
             }
         }
         return false;
@@ -297,11 +297,14 @@ public class DiscordRelay extends JavaPlugin implements Listener {
         @Override
         public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
             if (event.getName().equals("list")) {
-                event.deferReply().queue(); // Acknowledge the command immediately
+                event.deferReply().queue();
                 sendPlayerList(event);
             } else if (event.getName().equals("uptime")) {
-                event.deferReply().queue(); // Acknowledge the command immediately
+                event.deferReply().queue();
                 sendUptime(event);
+            } else if (event.getName().equals("tps")) {
+                event.deferReply().queue();
+                sendTPS(event);
             }
         }
 
@@ -379,6 +382,28 @@ public class DiscordRelay extends JavaPlugin implements Listener {
                     .setTitle("Server Uptime")
                     .setDescription(uptimeString)
                     .setColor(Color.GREEN);
+
+            event.getHook().sendMessageEmbeds(embed.build()).queue();
+        }
+
+        private void sendTPS(SlashCommandInteractionEvent event) {
+            double[] tps = Bukkit.getTPS();
+
+            double tps1min = tps.length > 0 ? Math.min(Math.round(tps[0] * 100.0) / 100.0, 20.0) : 0.0;
+            double tps5min = tps.length > 1 ? Math.min(Math.round(tps[1] * 100.0) / 100.0, 20.0) : 0.0;
+            double tps15min = tps.length > 2 ? Math.min(Math.round(tps[2] * 100.0) / 100.0, 20.0) : 0.0;
+            
+            String description = String.format("**1 minute:** %.2f TPS\n**5 minutes:** %.2f TPS\n**15 minutes:** %.2f TPS", 
+                    tps1min, tps5min, tps15min);
+            
+            // Choose colour based on worst TPS.
+            double worstTPS = Math.min(Math.min(tps1min, tps5min), tps15min);
+            Color color = worstTPS >= 18.0 ? Color.GREEN : worstTPS >= 15.0 ? Color.YELLOW : Color.RED;
+
+            EmbedBuilder embed = new EmbedBuilder()
+                    .setTitle("Server TPS")
+                    .setDescription(description)
+                    .setColor(color);
 
             event.getHook().sendMessageEmbeds(embed.build()).queue();
         }

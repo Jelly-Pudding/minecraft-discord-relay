@@ -1,21 +1,19 @@
 name: DiscordRelay
-version: '1.0.3'
+version: '1.1.0'
 main: com.jellypudding.discordRelay.DiscordRelay
 api-version: '1.21'
 description: "Relays messages between Minecraft and Discord."
 author: AlphaAlex115
+website: www.minecraftoffline.net
 softdepend: [BedrockSupport]
 loadbefore: [BedrockSupport]
 commands:
   discordrelay:
     description: "Manage the DiscordRelay plugin"
     usage: "/discordrelay reload"
-    permission: discordrelay.use
-    permission-message: "You don't have permission to use DiscordRelay commands."
+    permission: discordrelay.reload
+    permission-message: "You don't have permission to reload DiscordRelay."
 permissions:
-  discordrelay.use:
-    description: Allows use of the DiscordRelay command
-    default: op
   discordrelay.reload:
     description: Allows reloading the DiscordRelay plugin
     default: op
