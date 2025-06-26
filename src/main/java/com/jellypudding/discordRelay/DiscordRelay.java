@@ -119,7 +119,6 @@ public class DiscordRelay extends JavaPlugin implements Listener {
             try {
                 sendToDiscord("**Server is shutting down!**");
 
-                jda.removeEventListener(jda.getRegisteredListeners());
                 jda.shutdownNow();
                 try {
                     if (!jda.awaitShutdown(Duration.ofSeconds(2))) {
