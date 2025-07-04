@@ -1,5 +1,5 @@
 name: DiscordRelay
-version: '1.1.0'
+version: '1.1.1'
 main: com.jellypudding.discordRelay.DiscordRelay
 api-version: '1.21'
 description: "Relays messages between Minecraft and Discord."
