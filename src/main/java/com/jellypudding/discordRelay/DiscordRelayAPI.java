@@ -51,6 +51,14 @@ public class DiscordRelayAPI {
         }
     }
 
+    public static void sendCustomMessage(String message) {
+        if (pluginInstance != null && pluginInstance.isPluginConfigured()) {
+            pluginInstance.relayCustomMessage(message);
+        } else {
+            logWarning("DiscordRelayAPI called while plugin not ready (sendCustomMessage: " + message + ")");
+        }
+    }
+
     private static void logWarning(String message) {
         if (pluginInstance != null) {
             pluginInstance.getLogger().warning(message);

@@ -434,5 +434,11 @@ public class DiscordRelay extends JavaPlugin implements Listener {
         sendDeathMessageToDiscord(playerName, deathMessage);
     }
 
+    /** For DiscordRelayAPI: Sends a custom message to Discord */
+    public void relayCustomMessage(String message) {
+        if (!isConfigured) return;
+        sendToDiscord(message);
+    }
+
     // --- End Public API Methods ---
 }

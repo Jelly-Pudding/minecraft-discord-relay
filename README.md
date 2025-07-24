@@ -65,3 +65,52 @@ discord-channel-id: 'YOUR_CHANNEL_ID_HERE'
 
 ## Support Me
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K715TC1R)
+
+## API for Developers
+
+### Setup Dependencies
+1. Download the latest `DiscordRelay.jar` and place it in a `libs` directory - and then add this to your `build.gradle` file:
+    ```gradle
+    dependencies {
+        compileOnly files('libs/DiscordRelay-1.1.3.jar')
+    }
+    ```
+
+2. If DiscordRelay is absolutely required by your plugin, then add this to your `plugin.yml` file - and this means if DiscordRelay is not found then your plugin will not load:
+    ```yaml
+    depend: [DiscordRelay]
+    ```
+
+### Getting DiscordRelay Instance
+You can import DiscordRelay into your project through using the below code:
+```java
+import org.bukkit.Bukkit;
+import com.jellypudding.discordRelay.DiscordRelayAPI;
+
+// Check if DiscordRelay is available and ready
+if (DiscordRelayAPI.isReady()) {
+    // Plugin is loaded and configured - safe to use API
+    DiscordRelayAPI.sendCustomMessage("Hello from my plugin!");
+}
+```
+
+### Available API Methods
+```java
+// Check if DiscordRelay is loaded and properly configured
+boolean isReady = DiscordRelayAPI.isReady();
+
+// Send a custom message to Discord
+DiscordRelayAPI.sendCustomMessage("Custom message goes here :)");
+
+// Send player join event (if needed)
+DiscordRelayAPI.sendPlayerJoin("PlayerName");
+
+// Send player leave event (if needed)
+DiscordRelayAPI.sendPlayerLeave("PlayerName");
+
+// Send player chat message (if needed)
+DiscordRelayAPI.sendPlayerMessage("PlayerName", "Hello Discord!");
+
+// Send player death message (if needed)
+DiscordRelayAPI.sendPlayerDeath("PlayerName", "PlayerName was slain by a zombie");
+```
