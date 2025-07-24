@@ -63,9 +63,6 @@ discord-channel-id: 'YOUR_CHANNEL_ID_HERE'
 ## Permissions
 - `discordrelay.reload`: Allows reloading the plugin configuration (default: op).
 
-## Support Me
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K715TC1R)
-
 ## API for Developers
 
 ### Setup Dependencies
@@ -114,3 +111,6 @@ DiscordRelayAPI.sendPlayerMessage("PlayerName", "Hello Discord!");
 // Send player death message (if needed)
 DiscordRelayAPI.sendPlayerDeath("PlayerName", "PlayerName was slain by a zombie");
 ```
+
+## Support Me
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K715TC1R)
