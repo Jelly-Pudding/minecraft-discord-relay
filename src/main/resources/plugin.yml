@@ -5,8 +5,8 @@ api-version: '1.21'
 description: "Relays messages between Minecraft and Discord."
 author: AlphaAlex115
 website: www.minecraftoffline.net
-softdepend: [BedrockSupport]
-loadbefore: [BedrockSupport]
+softdepend: [BedrockSupport, OfflineStats]
+loadbefore: [BedrockSupport, OfflineStats]
 commands:
   discordrelay:
     description: "Manage the DiscordRelay plugin"

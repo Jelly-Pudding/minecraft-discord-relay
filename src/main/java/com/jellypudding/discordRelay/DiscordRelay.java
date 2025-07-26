@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -99,7 +100,19 @@ public class DiscordRelay extends JavaPlugin implements Listener {
             jda.updateCommands().addCommands(
                     Commands.slash("list", "Get a list of online players"),
                     Commands.slash("uptime", "Get the server's uptime"),
-                    Commands.slash("tps", "Get the server's TPS (ticks per second)")
+                    Commands.slash("tps", "Get the server's TPS (ticks per second)"),
+                    Commands.slash("firstseen", "Check when a player first joined the server")
+                            .addOption(OptionType.STRING, "name", "Player name", true),
+                    Commands.slash("lastseen", "Check when a player was last seen on the server")
+                            .addOption(OptionType.STRING, "name", "Player name", true),
+                    Commands.slash("timeplayed", "Check how long a player has played on the server")
+                            .addOption(OptionType.STRING, "name", "Player name", true),
+                    Commands.slash("chatter", "Check how many chat messages a player has sent")
+                            .addOption(OptionType.STRING, "name", "Player name", true),
+                    Commands.slash("kills", "Check how many kills a player has")
+                            .addOption(OptionType.STRING, "name", "Player name", true),
+                    Commands.slash("deaths", "Check how many times a player has died")
+                            .addOption(OptionType.STRING, "name", "Player name", true)
             ).queue();
 
             getLogger().info("Discord bot connected successfully!");
@@ -304,6 +317,11 @@ public class DiscordRelay extends JavaPlugin implements Listener {
             } else if (event.getName().equals("tps")) {
                 event.deferReply().queue();
                 sendTPS(event);
+            } else if (event.getName().equals("firstseen") || event.getName().equals("lastseen") ||
+                       event.getName().equals("timeplayed") || event.getName().equals("chatter") ||
+                       event.getName().equals("kills") || event.getName().equals("deaths")) {
+                event.deferReply().queue();
+                sendPlayerStat(event);
             }
         }
 
@@ -405,6 +423,78 @@ public class DiscordRelay extends JavaPlugin implements Listener {
                     .setColor(color);
 
             event.getHook().sendMessageEmbeds(embed.build()).queue();
+        }
+
+        private void sendPlayerStat(SlashCommandInteractionEvent event) {
+            String playerName = event.getOption("name").getAsString();
+            String commandName = event.getName();
+            String statType = getStatTypeFromCommand(commandName);
+
+            // Use FakePlayers pattern for OfflineStats integration
+            if (Bukkit.getPluginManager().isPluginEnabled("OfflineStats")) {
+                try {
+                    com.jellypudding.offlineStats.OfflineStats offlineStatsPlugin =
+                        (com.jellypudding.offlineStats.OfflineStats) Bukkit.getPluginManager().getPlugin("OfflineStats");
+                    com.jellypudding.offlineStats.api.OfflineStatsAPI api = offlineStatsPlugin.getAPI();
+
+                    getServer().getScheduler().runTaskAsynchronously(DiscordRelay.this, () -> {
+                        try {
+                            String formattedStat = api.getFormattedStat(playerName, statType);
+
+                            EmbedBuilder embed = new EmbedBuilder();
+                            if (formattedStat == null || formattedStat.isEmpty()) {
+                                embed.setTitle("No Data Found")
+                                        .setDescription("No data found for player: " + playerName)
+                                        .setColor(Color.RED);
+                            } else {
+                                embed.setTitle("Player Statistics")
+                                        .setDescription(formattedStat)
+                                        .setColor(Color.GREEN);
+                            }
+
+                            event.getHook().sendMessageEmbeds(embed.build()).queue();
+                        } catch (Exception e) {
+                            EmbedBuilder embed = new EmbedBuilder()
+                                    .setTitle("Error")
+                                    .setDescription("Error retrieving statistics for " + playerName + ": " + e.getMessage())
+                                    .setColor(Color.RED);
+                            event.getHook().sendMessageEmbeds(embed.build()).queue();
+                        }
+                    });
+                } catch (NoClassDefFoundError e) {
+                    getLogger().warning("Could not get player statistics. Is OfflineStats installed and enabled correctly?");
+                    EmbedBuilder embed = new EmbedBuilder()
+                            .setTitle("Error")
+                            .setDescription("OfflineStats plugin is not available. Statistics commands cannot be used.")
+                            .setColor(Color.RED);
+                    event.getHook().sendMessageEmbeds(embed.build()).queue();
+                } catch (Exception e) {
+                    getLogger().warning("Error getting player statistics: " + e.getMessage());
+                    EmbedBuilder embed = new EmbedBuilder()
+                            .setTitle("Error")
+                            .setDescription("Error accessing OfflineStats: " + e.getMessage())
+                            .setColor(Color.RED);
+                    event.getHook().sendMessageEmbeds(embed.build()).queue();
+                }
+            } else {
+                EmbedBuilder embed = new EmbedBuilder()
+                        .setTitle("Error")
+                        .setDescription("OfflineStats plugin is not enabled. Statistics commands cannot be used.")
+                        .setColor(Color.RED);
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+            }
+        }
+
+        private String getStatTypeFromCommand(String commandName) {
+            switch (commandName.toLowerCase()) {
+                case "firstseen": return "firstseen";
+                case "lastseen": return "lastseen";
+                case "timeplayed": return "timeplayed";
+                case "chatter": return "chatter";
+                case "kills": return "kills";
+                case "deaths": return "deaths";
+                default: return "";
+            }
         }
     }
 
