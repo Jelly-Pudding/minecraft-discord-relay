@@ -22,6 +22,7 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
     implementation "net.dv8tion:JDA:5.6.1"
     // Dependencies for local plugins (needed for compilation/IDE)
+    compileOnly files('libs/ChromaTag-1.2.2.jar')
     compileOnly files('libs/fake-players-1.3.jar')
     compileOnly files('libs/OfflineStats-1.0-SNAPSHOT.jar')
 }

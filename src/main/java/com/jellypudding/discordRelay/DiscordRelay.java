@@ -28,6 +28,8 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
+import com.jellypudding.discordRelay.utils.ChromaTagUtil;
+
 import java.awt.Color;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -43,6 +45,7 @@ public class DiscordRelay extends JavaPlugin implements Listener {
     private String discordChannelId;
     private boolean isConfigured = false;
     private long startTime;
+    private ChromaTagUtil chromaTagUtil;
 
     public boolean isPluginConfigured() {
         return isConfigured;
@@ -63,6 +66,14 @@ public class DiscordRelay extends JavaPlugin implements Listener {
         saveDefaultConfig();
         loadConfig();
         startTime = System.currentTimeMillis();
+
+        chromaTagUtil = new ChromaTagUtil(getLogger());
+
+        // Start cache cleanup task (runs every 20 minutes)
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
+            chromaTagUtil.cleanupCache();
+        }, 24000L, 24000L);
+
         if (isConfigured) {
             initializePlugin(false);
             DiscordRelayAPI.initialize(this);
@@ -277,6 +288,7 @@ public class DiscordRelay extends JavaPlugin implements Listener {
 
     private void reloadPlugin() {
         loadConfig();
+        chromaTagUtil.refresh();
         if (isConfigured) {
             initializePlugin(true);
             if (jda != null) {
@@ -332,7 +344,15 @@ public class DiscordRelay extends JavaPlugin implements Listener {
                 String name = (member != null && member.getNickname() != null) ? member.getNickname() : event.getAuthor().getName();
                 String discordMessageContent = event.getMessage().getContentDisplay();
 
-                String messageForMinecraft = String.format("§9[Discord] §6%s§f: %s", name, discordMessageContent);
+                net.kyori.adventure.text.Component discordPrefix = net.kyori.adventure.text.Component.text("[Discord] ")
+                        .color(net.kyori.adventure.text.format.NamedTextColor.GRAY);
+
+                net.kyori.adventure.text.Component playerNameComponent = chromaTagUtil.getColoredPlayerNameComponent(name);
+
+                net.kyori.adventure.text.Component messageComponent = net.kyori.adventure.text.Component.text(": " + discordMessageContent)
+                        .color(net.kyori.adventure.text.format.NamedTextColor.WHITE);
+
+                net.kyori.adventure.text.Component fullMessage = discordPrefix.append(playerNameComponent).append(messageComponent);
 
                 if (Bukkit.getPluginManager().isPluginEnabled("BedrockSupport")) {
                     try {
@@ -346,7 +366,7 @@ public class DiscordRelay extends JavaPlugin implements Listener {
                 }
 
                 Bukkit.getScheduler().runTask(DiscordRelay.this, () ->
-                        Bukkit.broadcast(net.kyori.adventure.text.Component.text(messageForMinecraft))
+                        Bukkit.broadcast(fullMessage)
                 );
             }
         }
