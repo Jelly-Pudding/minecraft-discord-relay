@@ -37,7 +37,6 @@ public class ChromaTagUtil {
         }
     }
 
-
     public Component getColoredPlayerNameComponent(String playerName) {
         // Check cache first
         CachedComponent cached = componentCache.get(playerName);
@@ -75,11 +74,6 @@ public class ChromaTagUtil {
         }
 
         return Component.text(playerName).color(playerColor);
-    }
-
-
-    public boolean isChromaTagAvailable() {
-        return chromaTag != null;
     }
 
     public void refresh() {
