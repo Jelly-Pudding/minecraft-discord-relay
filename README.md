@@ -7,6 +7,7 @@
 - Display player join and leave events in Discord.
 - Show player death messages in Discord.
 - Show player avatars in Discord messages.
+- ChromaTag Integration (optional): Display player name colours in in-game Discord relay messages.
 - `/list` command in Discord to see online Minecraft players.
 - `/uptime` command in Discord to check server uptime.
 - `/tps` command in Discord to check server TPS (ticks per second).
