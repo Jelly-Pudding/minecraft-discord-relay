@@ -278,8 +278,38 @@ public class DiscordRelay extends JavaPlugin implements Listener {
                     sender.sendMessage("You don't have permission to reload DiscordRelay.");
                     return true;
                 }
+            } else if (args.length > 2 && args[0].equalsIgnoreCase("send")) {
+                if (sender.hasPermission("discordrelay.send")) {
+                    String colourName = args[1].toLowerCase();
+                    String fullMessage = String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length));
+
+                    Color colour = parseColour(colourName);
+                    if (colour == null) {
+                        sender.sendMessage("Invalid colour! Available colours: red, green, blue, yellow, orange, purple, pink, grey, white, black");
+                        return true;
+                    }
+
+                    // Check if message contains a title (format: "Title: message")
+                    String title = "Server Message";
+                    String message = fullMessage;
+
+                    if (fullMessage.contains(":")) {
+                        String[] parts = fullMessage.split(":", 2);
+                        if (parts.length == 2 && !parts[0].trim().isEmpty() && !parts[1].trim().isEmpty()) {
+                            title = parts[0].trim();
+                            message = parts[1].trim();
+                        }
+                    }
+
+                    relayFormattedMessage(title, message, colour);
+                    sender.sendMessage("Message sent to Discord with " + colourName + " colour!");
+                    return true;
+                } else {
+                    sender.sendMessage("You don't have permission to send messages to Discord.");
+                    return true;
+                }
             } else {
-                sender.sendMessage("Usage: /discordrelay reload");
+                sender.sendMessage("Usage: /discordrelay reload | /discordrelay send <colour> <message>");
                 return true;
             }
         }
@@ -311,10 +341,40 @@ public class DiscordRelay extends JavaPlugin implements Listener {
             if (args.length == 1) {
                 List<String> completions = new ArrayList<>();
                 completions.add("reload");
+                completions.add("send");
                 return completions;
+            } else if (args.length == 2 && args[0].equalsIgnoreCase("send")) {
+                List<String> colours = new ArrayList<>();
+                colours.add("red");
+                colours.add("green");
+                colours.add("blue");
+                colours.add("yellow");
+                colours.add("orange");
+                colours.add("purple");
+                colours.add("pink");
+                colours.add("grey");
+                colours.add("white");
+                colours.add("black");
+                return colours;
             }
         }
         return null;
+    }
+
+    private Color parseColour(String colourName) {
+        switch (colourName.toLowerCase()) {
+            case "red": return Color.RED;
+            case "green": return Color.GREEN;
+            case "blue": return Color.BLUE;
+            case "yellow": return Color.YELLOW;
+            case "orange": return Color.ORANGE;
+            case "purple": return new Color(128, 0, 128);
+            case "pink": return Color.PINK;
+            case "grey": case "gray": return Color.GRAY;
+            case "white": return Color.WHITE;
+            case "black": return Color.BLACK;
+            default: return null;
+        }
     }
 
     private class DiscordListener extends ListenerAdapter {
@@ -550,5 +610,31 @@ public class DiscordRelay extends JavaPlugin implements Listener {
         sendToDiscord(message);
     }
 
-    // --- End Public API Methods ---
+    /** For DiscordRelayAPI: Sends a formatted embed message to Discord */
+    public void relayFormattedMessage(String title, String description, Color colour) {
+        if (!isConfigured) return;
+
+        if (jda != null) {
+            TextChannel channel = jda.getTextChannelById(discordChannelId);
+            if (channel != null) {
+                EmbedBuilder embed = new EmbedBuilder();
+
+                if (title != null && !title.trim().isEmpty()) {
+                    embed.setTitle(title);
+                }
+
+                if (description != null && !description.trim().isEmpty()) {
+                    embed.setDescription(description);
+                }
+
+                if (colour != null) {
+                    embed.setColor(colour);
+                }
+
+                channel.sendMessageEmbeds(embed.build()).queue();
+            } else {
+                getLogger().warning("Discord channel not found!");
+            }
+        }
+    }
 }

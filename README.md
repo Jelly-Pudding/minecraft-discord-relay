@@ -1,6 +1,6 @@
 # DiscordRelay Plugin
 
-**DiscordRelay** is a Minecraft Paper 1.21.8 plugin that creates a bidirectional chat bridge between your Minecraft server and a Discord channel.
+**DiscordRelay** is a Minecraft Paper 1.21.10 plugin that creates a bidirectional chat bridge between your Minecraft server and a Discord channel.
 
 ## Features
 - Relay chat messages from Minecraft to Discord and vice versa.
@@ -54,7 +54,12 @@ discord-channel-id: 'YOUR_CHANNEL_ID_HERE'
 ```
 
 ## In-game Commands
-`/discordrelay reload`: Reloads the plugin configuration. Requires `discordrelay.reload` permission (default: op).
+- `/discordrelay reload`: Reloads the plugin configuration. Requires `discordrelay.reload` permission (default: op).
+- `/discordrelay send <colour> <message>`: Sends a formatted message to Discord with the specified colour. Requires `discordrelay.send` permission (default: op).
+  - Available colours: red, green, blue, yellow, orange, purple, pink, grey, white, black
+  - Examples:
+    - `/discordrelay send red Server will restart in 5 minutes!` (uses default title "Server Message")
+    - `/discordrelay send red Alert: Server will restart in 5 minutes!` (uses "Alert" as title)
 
 ## Discord Commands
 - `/list`: Shows the list of online Minecraft players.
@@ -62,7 +67,9 @@ discord-channel-id: 'YOUR_CHANNEL_ID_HERE'
 - `/tps`: Shows the server's TPS (ticks per second) for the last 1, 5, and 15 minutes.
 
 ## Permissions
+- `discordrelay.use`: Allows using DiscordRelay commands (default: op).
 - `discordrelay.reload`: Allows reloading the plugin configuration (default: op).
+- `discordrelay.send`: Allows sending formatted messages to Discord (default: op).
 
 ## API for Developers
 
@@ -97,8 +104,11 @@ if (DiscordRelayAPI.isReady()) {
 // Check if DiscordRelay is loaded and properly configured
 boolean isReady = DiscordRelayAPI.isReady();
 
-// Send a custom message to Discord
+// Send a custom message to Discord (plain text)
 DiscordRelayAPI.sendCustomMessage("Custom message goes here :)");
+
+// Send a formatted message to Discord with colour and title
+DiscordRelayAPI.sendFormattedMessage("Alert", "I spilt my milk!", Color.RED);
 
 // Send player join event (if needed)
 DiscordRelayAPI.sendPlayerJoin("PlayerName");

@@ -1,7 +1,7 @@
 package com.jellypudding.discordRelay;
 
 import org.bukkit.Bukkit;
-
+import java.awt.Color;
 import java.util.logging.Level;
 
 /**
@@ -56,6 +56,14 @@ public class DiscordRelayAPI {
             pluginInstance.relayCustomMessage(message);
         } else {
             logWarning("DiscordRelayAPI called while plugin not ready (sendCustomMessage: " + message + ")");
+        }
+    }
+
+    public static void sendFormattedMessage(String title, String description, Color colour) {
+        if (pluginInstance != null && pluginInstance.isPluginConfigured()) {
+            pluginInstance.relayFormattedMessage(title, description, colour);
+        } else {
+            logWarning("DiscordRelayAPI called while plugin not ready (sendFormattedMessage: " + title + ")");
         }
     }
 

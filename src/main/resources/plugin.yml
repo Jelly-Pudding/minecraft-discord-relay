@@ -1,5 +1,5 @@
 name: DiscordRelay
-version: '1.1.4'
+version: '1.1.5'
 main: com.jellypudding.discordRelay.DiscordRelay
 api-version: '1.21'
 description: "Relays messages between Minecraft and Discord."
@@ -10,10 +10,16 @@ loadbefore: [BedrockSupport, OfflineStats]
 commands:
   discordrelay:
     description: "Manage the DiscordRelay plugin"
-    usage: "/discordrelay reload"
-    permission: discordrelay.reload
-    permission-message: "You don't have permission to reload DiscordRelay."
+    usage: "/discordrelay <reload|send> [colour] [message]"
+    permission: discordrelay.use
+    permission-message: "You don't have permission to use DiscordRelay commands."
 permissions:
+  discordrelay.use:
+    description: "Allows using DiscordRelay commands"
+    default: op
   discordrelay.reload:
-    description: Allows reloading the DiscordRelay plugin
+    description: "Allows reloading the DiscordRelay plugin"
+    default: op
+  discordrelay.send:
+    description: "Allows sending formatted messages to Discord"
     default: op
