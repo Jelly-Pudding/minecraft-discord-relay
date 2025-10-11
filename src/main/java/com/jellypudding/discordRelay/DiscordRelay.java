@@ -130,7 +130,10 @@ public class DiscordRelay extends JavaPlugin implements Listener {
 
             if (!isReload) {
                 sendToDiscord("**Server is starting up!**");
+                int pluginId = 27558;
+                new Metrics(this, pluginId);
             }
+
         } catch (Exception e) {
             getLogger().severe("Failed to connect to Discord. Please check your bot token and try again.");
             isConfigured = false;
