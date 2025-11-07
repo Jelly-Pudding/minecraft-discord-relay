@@ -5,3 +5,31 @@ discord-bot-token: "YOUR_BOT_TOKEN_HERE"
 
 # Discord channel ID for relaying messages
 discord-channel-id: "YOUR_CHANNEL_ID_HERE"
+
+# Word filter settings (filters messages going from in-game chat to Discord).
+# Discord is sensitive so it's best to keep this on to avoid trouble.
+word-filter:
+  enabled: true
+  # Format: "badword:replacement"
+  # Automatically handles plurals (s), past tense (ed), and gerunds (ing)
+  words:
+    - "retard:goofball"
+    - "fag:dope"
+    - "faggot:chump"
+    - "fagot:chump"
+    - "fgt:dude"
+    - "gay:happy"
+    - "dyke:mate"
+    - "nig:bud"
+    - "nigga:guy"
+    - "niga:comrade"
+    - "nigger:pal"
+    - "niger:amigo"
+    - "nigg:partner"
+    - "chink:brother"
+    - "paki:compadre"
+    - "cunt:chum"
+    - "tranny:friend"
+    - "trannies:friends"
+    - "trany:friend"
+    - "kys:take care"

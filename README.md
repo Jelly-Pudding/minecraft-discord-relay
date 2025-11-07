@@ -7,6 +7,7 @@
 - Display player join and leave events in Discord.
 - Show player death messages in Discord.
 - Show player avatars in Discord messages.
+- Configurable word filter to sanitise messages sent to Discord.
 - ChromaTag Integration (optional): Display player name colours in in-game Discord relay messages.
 - `/list` command in Discord to see online Minecraft players.
 - `/uptime` command in Discord to check server uptime.
@@ -45,12 +46,18 @@
 2. Set `discord-bot-token` to your bot's token.
 3. Set `discord-channel-id` to the ID of the Discord channel you want to use for the relay.
    (To get the channel ID, enable Developer Mode in Discord settings, then right-click the channel and select "Copy ID")
-4. Save the file.
+4. (Optional) Configure the word filter to replace inappropriate language in messages sent to Discord. This is recommended as Discord is sensitive and it will help you avoid trouble.
+5. Save the file.
 
 Example `config.yml`:
 ```yaml
 discord-bot-token: 'YOUR_BOT_TOKEN_HERE'
 discord-channel-id: 'YOUR_CHANNEL_ID_HERE'
+
+word-filter:
+  enabled: true
+  words:
+    - "badword:replacement"
 ```
 
 ## In-game Commands
@@ -77,7 +84,7 @@ discord-channel-id: 'YOUR_CHANNEL_ID_HERE'
 1. Download the latest `DiscordRelay.jar` and place it in a `libs` directory - and then add this to your `build.gradle` file:
     ```gradle
     dependencies {
-        compileOnly files('libs/DiscordRelay-1.1.3.jar')
+        compileOnly files('libs/DiscordRelay-1.1.7.jar')
     }
     ```
 

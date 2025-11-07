@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'com.jellypudding'
-version = '1.1.6'
+version = '1.1.7'
 
 repositories {
     mavenCentral()
@@ -20,7 +20,7 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.10-R0.1-SNAPSHOT")
-    implementation "net.dv8tion:JDA:6.0.0"
+    implementation "net.dv8tion:JDA:6.1.1"
     // Dependencies for local plugins (needed for compilation/IDE)
     compileOnly files('libs/ChromaTag-1.2.5.jar')
     compileOnly files('libs/fake-players-1.4.jar')

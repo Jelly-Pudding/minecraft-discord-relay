@@ -29,6 +29,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import com.jellypudding.discordRelay.utils.ChromaTagUtil;
+import com.jellypudding.discordRelay.utils.WordFilterUtil;
 
 import java.awt.Color;
 import java.time.Duration;
@@ -46,6 +47,7 @@ public class DiscordRelay extends JavaPlugin implements Listener {
     private boolean isConfigured = false;
     private long startTime;
     private ChromaTagUtil chromaTagUtil;
+    private WordFilterUtil wordFilterUtil;
 
     public boolean isPluginConfigured() {
         return isConfigured;
@@ -69,20 +71,24 @@ public class DiscordRelay extends JavaPlugin implements Listener {
 
         chromaTagUtil = new ChromaTagUtil(getLogger());
 
+        boolean filterEnabled = getConfig().getBoolean("word-filter.enabled", true);
+        List<String> filterWords = getConfig().getStringList("word-filter.words");
+        wordFilterUtil = new WordFilterUtil(filterEnabled, filterWords);
+
         // Start cache cleanup task (runs every 20 minutes)
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             chromaTagUtil.cleanupCache();
         }, 24000L, 24000L);
 
         if (isConfigured) {
-            initializePlugin(false);
+            initialisePlugin(false);
             DiscordRelayAPI.initialize(this);
         } else {
             getLogger().warning("The Discord bot is not yet configured. Please check your DiscordRelay/config.yml file and then use the /discordrelay reload command.");
         }
     }
 
-    private void initializePlugin(boolean isReload) {
+    private void initialisePlugin(boolean isReload) {
         connectToDiscord(isReload);
         if (isConfigured) {
             registerListeners();
@@ -189,10 +195,12 @@ public class DiscordRelay extends JavaPlugin implements Listener {
         if (jda != null) {
             TextChannel channel = jda.getTextChannelById(discordChannelId);
             if (channel != null) {
+                String filteredMessage = wordFilterUtil.filterMessage(message);
+                
                 String avatarUrl = String.format("https://mc-heads.net/avatar/%s", playerName);
                 EmbedBuilder embed = new EmbedBuilder()
                         .setAuthor(playerName, null, avatarUrl)
-                        .setDescription(message)
+                        .setDescription(filteredMessage)
                         .setColor(Color.YELLOW);
                 channel.sendMessageEmbeds(embed.build()).queue();
             } else {
@@ -218,19 +226,19 @@ public class DiscordRelay extends JavaPlugin implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
         String playerName = event.getPlayer().getName();
         sendPlayerEventToDiscord(playerName, "joined the game", Color.GREEN);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerQuit(PlayerQuitEvent event) {
         String playerName = event.getPlayer().getName();
         sendPlayerEventToDiscord(playerName, "left the game", Color.RED);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerDeath(PlayerDeathEvent event) {
         String playerName = event.getEntity().getName();
         String deathMessage = event.deathMessage() != null
@@ -245,9 +253,11 @@ public class DiscordRelay extends JavaPlugin implements Listener {
         if (jda != null) {
             TextChannel channel = jda.getTextChannelById(discordChannelId);
             if (channel != null) {
+                String filteredDeathMessage = wordFilterUtil.filterMessage(deathMessage);
+
                 String avatarUrl = String.format("https://mc-heads.net/avatar/%s", playerName);
                 EmbedBuilder embed = new EmbedBuilder()
-                        .setAuthor(deathMessage, null, avatarUrl)
+                        .setAuthor(filteredDeathMessage, null, avatarUrl)
                         .setColor(Color.GRAY);
                 channel.sendMessageEmbeds(embed.build()).queue();
             } else {
@@ -322,8 +332,13 @@ public class DiscordRelay extends JavaPlugin implements Listener {
     private void reloadPlugin() {
         loadConfig();
         chromaTagUtil.refresh();
+
+        boolean filterEnabled = getConfig().getBoolean("word-filter.enabled", true);
+        List<String> filterWords = getConfig().getStringList("word-filter.words");
+        wordFilterUtil = new WordFilterUtil(filterEnabled, filterWords);
+
         if (isConfigured) {
-            initializePlugin(true);
+            initialisePlugin(true);
             if (jda != null) {
                 getLogger().info("DiscordRelay plugin reloaded successfully.");
             } else {
@@ -513,7 +528,6 @@ public class DiscordRelay extends JavaPlugin implements Listener {
             String commandName = event.getName();
             String statType = getStatTypeFromCommand(commandName);
 
-            // Use FakePlayers pattern for OfflineStats integration
             if (Bukkit.getPluginManager().isPluginEnabled("OfflineStats")) {
                 try {
                     com.jellypudding.offlineStats.OfflineStats offlineStatsPlugin =
