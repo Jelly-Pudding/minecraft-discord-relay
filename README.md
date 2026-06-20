@@ -1,6 +1,6 @@
 # DiscordRelay Plugin
 
-**DiscordRelay** is a Minecraft Paper 26.1.2 plugin that creates a bidirectional chat bridge between your Minecraft server and a Discord channel. Although it was custom built for [minecraftoffline.net](https://www.minecraftoffline.net) any server can use it.
+**DiscordRelay** is a Minecraft Paper 26.2 plugin that creates a bidirectional chat bridge between your Minecraft server and a Discord channel. Although it was custom built for [minecraftoffline.net](https://www.minecraftoffline.net) any server can use it.
 
 ## Features
 - Relay chat messages from Minecraft to Discord and vice versa.
