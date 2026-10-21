@@ -3,6 +3,8 @@ package com.jellypudding.discordRelay.discord;
 import com.jellypudding.discordRelay.DiscordRelay;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -12,6 +14,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -42,13 +45,18 @@ public class DiscordBotListener extends ListenerAdapter {
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         if (!event.getChannel().getId().equals(plugin.getDiscordChannelId())) return;
-        if (event.getAuthor().isBot()) return;
+        if (event.getAuthor().isBot() && (!plugin.getConfig().getBoolean("relay-bot-messages")
+                || event.getAuthor().getIdLong() == event.getJDA().getSelfUser().getIdLong())) return;
 
         Member member = event.getMember();
         String name = (member != null && member.getNickname() != null)
                 ? member.getNickname()
                 : event.getAuthor().getName();
         String content = event.getMessage().getContentDisplay();
+        if (content.isBlank() && event.getAuthor().isBot()) {
+            content = getBotMessageContent(event.getMessage());
+            if (content.isEmpty()) return;
+        }
 
         Component fullMessage = Component.text("[Discord] ").color(NamedTextColor.GRAY)
                 .append(plugin.getChromaTagUtil().getColoredPlayerNameComponent(name))
@@ -66,6 +74,21 @@ public class DiscordBotListener extends ListenerAdapter {
         }
 
         Bukkit.getScheduler().runTask(plugin, () -> Bukkit.broadcast(fullMessage));
+    }
+
+    // Bots often post only embeds or attachments, which have no plain text content.
+    // Convert the message content into plain text for in-game
+    private static String getBotMessageContent(Message message) {
+        List<String> parts = new ArrayList<>();
+        for (MessageEmbed embed : message.getEmbeds()) {
+            if (embed.getAuthor() != null) parts.add(embed.getAuthor().getName());
+            parts.add(embed.getTitle());
+            parts.add(embed.getDescription());
+            embed.getFields().forEach(field -> { parts.add(field.getName()); parts.add(field.getValue()); });
+        }
+        message.getAttachments().forEach(attachment -> parts.add("[" + attachment.getFileName() + "]"));
+        return parts.stream().filter(part -> part != null && !part.isBlank())
+                .collect(Collectors.joining(" | ")).replace('\n', ' ');
     }
 
     private void sendPlayerList(SlashCommandInteractionEvent event) {

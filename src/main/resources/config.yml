@@ -6,6 +6,9 @@ discord-bot-token: "YOUR_BOT_TOKEN_HERE"
 # Discord channel ID for relaying messages
 discord-channel-id: "YOUR_CHANNEL_ID_HERE"
 
+# Relay messages from other bots and webhooks to in-game chat (this bot's own messages are always ignored).
+relay-bot-messages: false
+
 # Word filter settings (filters messages going from in-game chat to Discord).
 # Discord is sensitive so it's best to keep this on to avoid trouble.
 word-filter:

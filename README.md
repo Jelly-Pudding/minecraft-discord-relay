@@ -47,12 +47,14 @@
 3. Set `discord-channel-id` to the ID of the Discord channel you want to use for the relay.
    (To get the channel ID, enable Developer Mode in Discord settings, then right-click the channel and select "Copy ID")
 4. (Optional) Configure the word filter to replace inappropriate language in messages sent to Discord. This is recommended as Discord is sensitive and it will help you avoid trouble.
-5. Save the file.
+5. (Optional) Set `relay-bot-messages` to `true` to relay messages from other bots and webhooks to in-game chat. Messages that only contain embeds or attachments are relayed as their embed text and file names. This is off by default, and the plugin's own bot is always ignored.
+6. Save the file.
 
 Example `config.yml`:
 ```yaml
 discord-bot-token: 'YOUR_BOT_TOKEN_HERE'
 discord-channel-id: 'YOUR_CHANNEL_ID_HERE'
+relay-bot-messages: false
 
 word-filter:
   enabled: true
